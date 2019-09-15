@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import mglearn
 from matplotlib.colors import ListedColormap
 
+#  This is an example of Batch Gradient Descent
 class adaline:
     def __init__(self,eta=0.01,n_iter=10,randomstate=1):
         self.eta=eta
