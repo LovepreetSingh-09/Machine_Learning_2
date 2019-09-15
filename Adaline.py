@@ -11,7 +11,7 @@ import mglearn
 from matplotlib.colors import ListedColormap
 
 #  This is an example of Batch Gradient Descent
-class adaline:
+class adaline(object):
     def __init__(self,eta=0.01,n_iter=10,randomstate=1):
         self.eta=eta
         self.n_iter=n_iter
@@ -59,6 +59,37 @@ ax[1].set_ylabel('Sum-squared-error')
 ax[1].set_title('Adaline - Learning rate 0.0001')
 plt.show()
             
-        
-        
+def plot_decision_regions(X,y,classifier,res=0.02):
+    markers = ('s', 'x', 'o', '^', 'v')
+    colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan')
+    cmap=ListedColormap(colors[:len(np.unique(y))])
+    x1_min,x1_max=X[:,0].min()-1,X[:,0].max()+1
+    x2_min,x2_max=X[:,1].min()-1,X[:,1].max()+1
+    xx1,xx2=np.meshgrid(np.arange(x1_min,x1_max,res),np.arange(x2_min,x2_max,res))
+    print(xx1.shape)
+    z=classifier.predict(np.array([xx1.ravel(),xx2.ravel()]).T)
+    z=z.reshape(xx1.shape)
+    print(z.shape)
+    plt.contourf(xx1,xx2,z,alpha=0.3,cmap=cmap)
+    plt.xlim(xx1.min(), xx1.max())
+    plt.ylim(xx2.min(), xx2.max())
+    # plot class samples
+    for idx,cl in enumerate(np.unique(y)):
+        plt.scatter(x=X[y==cl,0],y=X[y==cl,1],marker=markers[idx],c=colors[idx],label=cl)
+
+Xstd=np.copy(X)      
+# Standardization:- 
+Xstd[:,0]=(Xstd[:,0]-np.mean(Xstd[:,0]))/np.std(Xstd[:,0])  
+Xstd[:,1]=(Xstd[:,1]-np.mean(Xstd[:,1]))/np.std(Xstd[:,1])   
+
+ada = adaline(n_iter=15, eta=0.01)
+ada.fit(Xstd, y)
+plot_decision_regions(Xstd, y, classifier=ada)
+plt.title('Adaline - Gradient Descent')
+plt.xlabel('sepal length [standardized]')
+plt.ylabel('petal length [standardized]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
         
