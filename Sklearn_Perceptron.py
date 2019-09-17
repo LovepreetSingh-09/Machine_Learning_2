@@ -32,6 +32,7 @@ y_pred=ppn.predict(X_test_std)
 print('Misclassified Samples:',np.sum(y_pred!=y_test))
 print('Accuracy: %.2f'%accuracy_score(y_test,y_pred))
 
+
 def decision_plot_regions(X,y,classifier,res=0.02,test_idx=None):
     colors=['green','blue','red','yellow']
     marker=['*','x','s','^']
