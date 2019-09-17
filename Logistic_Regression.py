@@ -122,3 +122,28 @@ print(logreg.predict_proba(X_train_std[:3,:]).argmax(axis=1))
 print(logreg.predict(X_train_std[:3,:]))
 # Always give 2D array while using predict of sklearn
 print(logreg.predict(X_train_std[2,:].reshape(1,-1)))
+
+# Regularization:-
+# C is inverse of regularization parameter lambda 
+# For regularization , 0.5*lambda*|w|**2 has been added to avoid overfitting
+# This has + sign so after derivation, the lambda*w has used as subtracted
+# Hence, the weight update is lesser and thus it reduces the chance of overfitting
+weights,params=[],[]
+for c in np.arange(-5,5):
+    logreg=LogisticRegression(C=10.**c,random_state=1)
+    logreg.fit(X_train_std,y_train)
+    b=logreg.coef_.shape
+    weights.append(logreg.coef_[1])
+    params.append(10.**c)
+    
+weights=np.array(weights)
+print(b)  # coef_ is actually the weights per class per feature. Here, its shape is (3,2) 3 classes 2 features
+print(weights)
+plt.plot(params,weights[:,0],label='Petal Length')
+plt.plot(params,weights[:,1],linestyle='--',label='Petal Width')
+plt.ylabel('Weights coefficient')
+plt.xlabel('C')
+plt.xscale('log')
+plt.legend()
+plt.show()
+
