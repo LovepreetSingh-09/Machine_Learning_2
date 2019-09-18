@@ -64,7 +64,6 @@ class Logistic_Regression(object):
             cost=(-y.dot(np.log(output)))-((1-y).dot(np.log(1-output)))
             self.cost_.append(cost)
         return self
-            
     def input_(self,X):
         return X.dot(self.w_[1:])+self.w_[0]
     def activation(self,x):
