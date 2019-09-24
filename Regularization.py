@@ -64,8 +64,3 @@ plt.legend(loc='upper left')
 ax.legend(loc='upper center',
 bbox_to_anchor=(1.38, 1.03),ncol=1, fancybox=True)
 plt.show()
-
-
-
-
-
