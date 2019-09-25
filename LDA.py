@@ -137,10 +137,13 @@ plt.ylabel('LD 2')
 plt.legend(loc='lower left')
 plt.show()
 
+# Here we got 100 % accuracy on test and 99 % on training data which means LDA has classified data well by dimensionality reduction
 X_test_lda = lda.transform(X_test_std)
-print(lr.score(X_test_std,y_train.reshape(1,-1)))
+print(lr.score(X_test_lda,y_test))  # 1.0
+print(lr.score(X_train_lda,y_train))  # 1.0
 plot_decision_regions(X_test_lda, y_test, classifier=lr)
 plt.xlabel('LD 1')
 plt.ylabel('LD 2')
 plt.legend(loc='lower left')
 plt.show()
+
