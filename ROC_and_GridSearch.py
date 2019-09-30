@@ -129,10 +129,3 @@ print(np.mean(y_pred == y_imb) * 100)
 from sklearn.utils import resample
 X_new,y_new=resample(X_imb[y_imb==1],y_imb[y_imb==1],replace=True,n_samples=X_imb[y_imb==0].shape[0],random_state=123)
 
-
-
-
-
-
-
-
