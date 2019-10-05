@@ -125,7 +125,6 @@ print(logreg.predict(X_train_std[2,:].reshape(1,-1)))
 # Regularization:-
 # C is inverse of regularization parameter lambda 
 # For regularization , 0.5*lambda*|w|**2 has been added to avoid overfitting
-# This has + sign so after derivation, the lambda*w has used as subtracted
 # Hence, the weight update is lesser and thus it reduces the chance of overfitting
 weights,params=[],[]
 for c in np.arange(-5,5):
