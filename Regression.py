@@ -192,7 +192,115 @@ lasso = Lasso(alpha=1.0)
 from sklearn.linear_model import ElasticNet
 elanet = ElasticNet(alpha=1.0, l1_ratio=0.5)
 
+# Adding more feature space
+from sklearn.preprocessing import PolynomialFeatures
+X = np.array([ 258.0, 270.0, 294.0, 320.0, 342.0,368.0, 396.0, 446.0, 480.0, 586.0]) [:, np.newaxis]
+y = np.array([ 236.4, 234.4, 252.8, 298.6, 314.2,342.2, 360.8, 368.0, 391.2, 390.8])
+lr = LinearRegression()
+pr = LinearRegression()
+quadratic = PolynomialFeatures(degree=2)
+X_quad = quadratic.fit_transform(X)
+print(X_quad.shape) # (10, 3)
+
+lr.fit(X, y)
+X_fit = np.arange(250,600,10)[:, np.newaxis]
+y_lin_fit = lr.predict(X_fit)
+
+pr.fit(X_quad, y)
+y_quad_fit = pr.predict(quadratic.fit_transform(X_fit))
+
+plt.scatter(X, y, label='training points')
+plt.plot(X_fit, y_lin_fit,label='linear fit', linestyle='--')
+plt.plot(X_fit, y_quad_fit,label='quadratic fit')
+plt.legend(loc='upper left')
+plt.show()
 
 
+y_lin_pred = lr.predict(X)
+y_quad_pred = pr.predict(X_quad)
+print('Training MSE linear: %.3f, quadratic: %.3f' % (mean_squared_error(y, y_lin_pred),mean_squared_error(y, y_quad_pred)))
+# Training MSE linear: 569.780, quadratic: 61.330
+print('Training R^2 linear: %.3f, quadratic: %.3f' % ( r2_score(y, y_lin_pred),r2_score(y, y_quad_pred)))
+# Training R^2 linear: 0.832, quadratic: 0.982
+# The prediction is actually got better with a curve line
 
+X = df[['LSTAT']].values
+y = df['MEDV'].values
+regr = LinearRegression()
+# create quadratic features
+quadratic = PolynomialFeatures(degree=2)
+cubic = PolynomialFeatures(degree=3)
+X_quad = quadratic.fit_transform(X)
+X_cubic = cubic.fit_transform(X)
+print(X_cubic.shape) #  (506, 4)
+
+# fit features and use degree 3 of the polynomial features
+X_fit = np.arange(X.min(), X.max(), 1)[:, np.newaxis]
+regr = regr.fit(X, y)
+y_lin_fit = regr.predict(X_fit)
+linear_r2 = r2_score(y, regr.predict(X))
+regr = regr.fit(X_quad, y)
+y_quad_fit = regr.predict(quadratic.fit_transform(X_fit))
+quadratic_r2 = r2_score(y, regr.predict(X_quad))
+regr = regr.fit(X_cubic, y)
+y_cubic_fit = regr.predict(cubic.fit_transform(X_fit))
+cubic_r2 = r2_score(y, regr.predict(X_cubic))
+# plot results
+plt.scatter(X, y, label='training points', color='lightgray')
+plt.plot(X_fit, y_lin_fit,label='linear (d=1), $R^2=%.2f$' % linear_r2,color='blue',
+         lw=2,linestyle=':')
+plt.plot(X_fit, y_quad_fit,label='quadratic (d=2), $R^2=%.2f$' % quadratic_r2,
+         color='red',lw=2,linestyle='-')
+plt.plot(X_fit, y_cubic_fit,label='cubic (d=3), $R^2=%.2f$' % cubic_r2,
+         color='green',lw=2,linestyle='--')
+plt.xlabel('% lower status of the population [LSTAT]')
+plt.ylabel('Price in $1000s [MEDV]')
+plt.legend(loc='upper right')
+plt.show()
+
+# transform features by rooting the dependent and log of independent variable
+X_log = np.log(X)
+y_sqrt = np.sqrt(y)
+# fit features
+X_fit = np.arange(X_log.min()-1, X_log.max()+1, 1)[:, np.newaxis]
+regr = regr.fit(X_log, y_sqrt)
+y_lin_fit = regr.predict(X_fit)
+linear_r2 = r2_score(y_sqrt, regr.predict(X_log))
+# plot results
+plt.scatter(X_log, y_sqrt,label='training points',color='lightgray')
+plt.plot(X_fit, y_lin_fit,label='linear (d=1), $R^2=%.2f$' % linear_r2,
+         color='blue',lw=2)
+plt.xlabel('log(% lower status of the population [LSTAT])')
+plt.ylabel('$\sqrt{Price \; in \; \$1000s \; [MEDV]}$')
+plt.legend(loc='lower left')
+plt.show()
+# As you can see this model with just one feature worked better than having multiple features
+
+# Random Forest Regressor
+# Here the entropy is calculated as the MSE which is same as variance
+from sklearn.tree import DecisionTreeRegressor
+X = df[['LSTAT']].values
+y = df['MEDV'].values
+tree = DecisionTreeRegressor(max_depth=3)
+tree.fit(X, y)
+sort_idx = X.flatten().argsort()
+lin_regplot(X[sort_idx], y[sort_idx], tree)
+plt.xlabel('% lower status of the population [LSTAT]')
+plt.ylabel('Price in $1000s [MEDV]')
+plt.show()
+# As you can see it makes a steeper line 
+print(r2_score(y,tree.predict(X))) # 0.69938
+# Almost same as transformed linear regression
+
+# Create a residual plot
+plt.scatter(y_train_pred,y_train_pred - y_train, c='steelblue',edgecolor='white',
+            marker='o',s=35,alpha=0.9,label='Training data')
+plt.scatter(y_test_pred,y_test_pred - y_test, c='limegreen', edgecolor='white',
+            marker='s',s=35,alpha=0.9,label='Test data')
+plt.xlabel('Predicted values')
+plt.ylabel('Residuals')
+plt.legend(loc='upper left')
+plt.hlines(y=0, xmin=-10, xmax=50, lw=2, color='black')
+plt.xlim([-10, 50])
+plt.show()
 
