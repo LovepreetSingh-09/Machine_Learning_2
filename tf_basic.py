@@ -124,7 +124,6 @@ X_test_centered = (X_test - mean_vals)/std_val
 del X_train, X_test
 print(X_train_centered.shape, y_train.shape)
 print(X_test_centered.shape, y_test.shape)
-print(y_train_onehot.shape)
 
 n_features = X_train_centered.shape[1]
 n_classes = 10
