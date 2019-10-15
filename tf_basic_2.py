@@ -29,12 +29,12 @@ n_classes=len(np.unique(y_train))
 n_features=X_train.shape[1]
 g=tf.Graph()
 with g.as_default():
-    tf_x=tf1.placeholder(shape=(None,n_features), dtype=tf.float64,name='tf_x')
+    tf_x=tf1.placeholder(shape=(None,784), dtype=tf.float64,name='tf_x')
     tf_y=tf1.placeholder(dtype=tf.int32,shape=None,name='tf_y')
-    yone_hot=tf.one_hot(indices=tf_y, depth=n_classes)
+    yone_hot=tf.one_hot(indices=tf_y, depth=10)
     h1=tf1.layers.dense(inputs=tf_x,units=50,activation=tf1.tanh,name='layer_1')
     h2=tf1.layers.dense(inputs=h1,units=50, activation=tf1.tanh,name='layer_2')
-    logits=tf1.layers.dense(inputs=h2,units=n_classes,activation=None,name='layers3')
+    logits=tf1.layers.dense(inputs=h2,units=10,activation=None,name='layers3')
     classes=tf1.argmax(logits,axis=1,name='classes')
 
 with g.as_default():
