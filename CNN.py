@@ -86,6 +86,7 @@ def fc_layer(input_tensor,n_outputs,name,activation_fn=None):
         input_shape=np.prod(input_shape)
         if input_shape>1:
             input_tensor=tf.reshape(input_tensor,shape=(-1,input_shape))
+            print(input_tensor)
         weight_shape=[input_shape,n_outputs]
         weights=tf1.get_variable(shape=weight_shape,name='_weights')
         print(weights)
@@ -116,24 +117,114 @@ def build_cnn():
     y_onehot=tf.one_hot(indices=tf_y,depth=10,dtype=tf.float32,name='tf_one_hot')
     h1=conv_layer(tf_x_img,n_outputs=32,kernel_size=(5,5),padding_mode='VALID',name='conv_1')
     h1_pool=tf.nn.max_pool(h1,ksize=(1,2,2,1),strides=(1,2,2,1),padding='SAME')
-    h2=conv_layer(h1_pool,kernel_size(5,5),n_outputs=64,padding_mode='VALID',name='conv_2')
+    h2=conv_layer(h1_pool,kernel_size=(5,5),n_outputs=64,padding_mode='VALID',name='conv_2')
     h2_pool=tf.nn.max_pool(h2,ksize=(1,2,2,1),strides=(1,2,2,1),padding='SAME')
     h3=fc_layer(h2_pool,n_outputs=1024,activation_fn=tf.nn.relu,name='fc_1')
     keep_prob=tf1.placeholder(dtype=tf.float32,name='keep_prob')
-    h3_drop=tf.nn.dropout(h3,keep_prob=keep_prob,name='dropout_layer')
-    h4=fc_layer(h3_drop,n_outputs=10,activation_fn=None)
+    h3_drop=tf1.nn.dropout(h3,keep_prob=keep_prob,name='dropout_layer')
+    h4=fc_layer(h3_drop,n_outputs=10,activation_fn=None,name='fc_2')
     predictions = {'probabilities': tf.nn.softmax(h4, name='probabilities'),
                    'labels': tf.cast(tf.argmax(h4, axis=1), tf.int32,name='labels')}
-    loss=tf.nn.softmax_cross_entropy_with_logits(logits=h4,labels=y_onehot,name='loss_cross_entropy')
-    optimizer=tf.train.AdamOptimizer(learning_rate)
+    loss=tf.reduce_mean(tf1.nn.softmax_cross_entropy_with_logits(logits=h4,labels=y_onehot),name='loss_cross_entropy')
+    optimizer=tf1.train.AdamOptimizer(learning_rate)
     optimizer=optimizer.minimize(loss,name='train_op')
-    correct_predictions=tf.equal(predictions[labels],tf_y,name='correct_preds')
-    accuracy=tf.reduce_mean(correct_predictions,dtype=tf.float16,name='accuracy')
+    print(loss)
+    correct_predictions=tf.equal(predictions['labels'],tf_y,name='correct_preds')
+    accuracy=tf.reduce_mean(tf1.cast(correct_predictions,tf.float32),name='accuracy')
+    print(accuracy)
+ 
+def train(sess,training_set,validation_set=None,initializer=True,epochs=20,shuffle=True,dropout=0.5,random_seed=None):
+    X_data=np.array(training_set[0])
+    y_data=np.array(training_set[1])
+    training_loss=[]
+    if initializer:
+        sess.run(tf1.global_variables_initializer())
+    np.random.seed(random_seed)
+    for epoch in range(1,epochs+1):
+        batch_gen=batch_generator(X_data,y_data,shuffle=shuffle)
+        avg_loss=0.0
+        for i, (batch_x,batch_y) in enumerate(batch_gen):
+            feed = {'tf_x:0': batch_x,'tf_y:0': batch_y,'keep_prob:0': dropout}
+            loss, _ = sess.run(['loss_cross_entropy:0', 'train_op'],feed_dict=feed)
+            avg_loss=avg_loss + loss
+        training_loss.append(avg_loss)
+        print('Epoch %02d Training Avg. Loss: %7.3f' % (epoch, avg_loss), end=' ')
+        if validation_set is not None:
+            feed={'tf_x:0':validation_set[0],'tf_y:0':validation_set[1],'keep_prob:0':1}
+            valid_acc=sess.run('accuracy:0',feed_dict=feed)
+            print('validation_accuracy : ',valid_acc)
+        print()
+
+def predict(sess,X_test,return_proba=False):
+    feed={'tf_x:0':X_test,'keep_proba:0':1}
+    if return_proba:
+        return sess.run('probabilities:0',feed_dict=feed)
+    else:
+        return sess.run('labels:0',feed_dict=feed)
+
+def save(sess,saver,epoch,path='./model/'):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    print('Saving Model.........')
+    saver.save(sess,os.path.join(path,'cnn-model.ckpt'),global_step=epoch)
+
+def load(sess,epochs,saver,path):
+    print('Loading Model............')
+    saver.restore(sess,os.path.join(path,'cnn-model.ckpt-%d'%epochs))
+
+
+learning_rate=1e-04
+random_seed=123
+
+g=tf.Graph()
+with g.as_default():
+    tf1.set_random_seed(random_seed)
+    build_cnn()
+    saver=tf1.train.Saver()
+
+with tf1.Session(graph=g) as sess:
+    train(sess,training_set=[X_train_centered,y_train],validation_set=[X_valid_centered,
+          y_valid],epochs=20,random_seed=random_seed,initializer=True,shuffle=True)
+    save(sess,saver,epoch=20)
+
+del g
     
-    
-    
-    
-    
+config.gpu_options.allow_growth = True
+tf.test.is_built_with_cuda()
+tf.test.is_gpu_available(cuda_only=False, min_cuda_compute_capability=None)
+
+g2 = tf.Graph()
+with g2.as_default():
+    tf1.set_random_seed(random_seed)
+    ## build the graph
+    build_cnn()
+    saver = tf.train.Saver()
+
+with tf1.Session(graph=g2) as sess:
+    load(saver, sess,epoch=20, path='./model/')
+    preds = predict(sess, X_test_centered,return_proba=False)
+    print('Test Accuracy: %.3f%%' % (100*np.sum(preds == y_test)/len(y_test)))
+
+np.set_printoptions(precision=2, suppress=True)
+with tf1.Session(graph=g2) as sess:
+    load(saver, sess,epoch=20, path='./model/')
+    print(predict(sess, X_test_centered[:10],return_proba=False))
+    print(predict(sess, X_test_centered[:10],return_proba=True))
+
+
+## continue training for 20 more epochs
+## without re-initializing :: initialize=False
+## create a new session
+## and restore the model
+with tf1.Session(graph=g2) as sess:
+    load(saver, sess,epoch=20, path='./model/')
+    train(sess,training_set=(X_train_centered, y_train),
+          validation_set=(X_valid_centered, y_valid),initialize=False,
+          epochs=20,random_seed=123)
+    save(saver, sess, epoch=40, path='./model/')
+    preds = predict(sess, X_test_centered,return_proba=False)
+    print('Test Accuracy: %.3f%%' % (100*np.sum(preds == y_test)/len(y_test)))
+
 
 
 
