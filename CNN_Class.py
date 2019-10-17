@@ -15,17 +15,18 @@ import tensorflow.keras as keras
 from scipy.signal import convolve2d
 from keras.datasets import mnist
 
-(x_train,y_train),(x_test,y_test)=mnist.load_data()
+(x_train,Y_train),(x_test,y_test)=mnist.load_data()
 print(x_train.shape)
 print(x_test.shape)
-X_train=x_train.reshape(60000,784)
+X_tr=x_train.reshape(60000,784)
 X_test=x_test.reshape(10000,784)
-X_train, y_train = X_train[:50000,:], y_train[:50000]
-X_valid, y_valid = X_train[50000:,:], y_train[50000:]
+X_train, y_train = X_tr[:50000,:], Y_train[:50000]
+X_valid, y_valid = X_tr[50000:,:], Y_train[50000:];X_valid.shape
 mean_vals = np.mean(X_train, axis=0)
 std_val = np.std(X_train)
 X_train_centered = (X_train - mean_vals)/std_val
 X_valid_centered = (X_valid - mean_vals)/std_val
+print(X_valid.shape,y_valid.shape)
 X_test_centered = (X_test - mean_vals)/std_val
 
 def batch_generator(X, y, batch_size=64,shuffle=False, random_seed=None):
