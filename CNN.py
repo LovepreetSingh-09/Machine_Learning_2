@@ -12,6 +12,7 @@ import tensorflow as tf
 import tensorflow.compat.v1 as tf1
 import tensorflow.keras as keras
 from scipy.signal import convolve2d
+import tensorboard
 
 x = [1, 3, 2, 4, 5, 6, 1, 3]
 w = [1, 0, 3, 1, 2]
@@ -31,17 +32,18 @@ print(image[100:103,100:103,:])
 
 from keras.datasets import mnist
 
-(x_train,y_train),(x_test,y_test)=mnist.load_data()
+(x_train,Y_train),(x_test,y_test)=mnist.load_data()
 print(x_train.shape)
 print(x_test.shape)
-X_train=x_train.reshape(60000,784)
+X_tr=x_train.reshape(60000,784)
 X_test=x_test.reshape(10000,784)
-X_train, y_train = X_train[:50000,:], y_train[:50000]
-X_valid, y_valid = X_train[50000:,:], y_train[50000:]
+X_train, y_train = X_tr[:50000,:], Y_train[:50000]
+X_valid, y_valid = X_tr[50000:,:], Y_train[50000:];X_valid.shape
 mean_vals = np.mean(X_train, axis=0)
 std_val = np.std(X_train)
 X_train_centered = (X_train - mean_vals)/std_val
 X_valid_centered = (X_valid - mean_vals)/std_val
+print(X_valid.shape,y_valid.shape)
 X_test_centered = (X_test - mean_vals)/std_val
 
 def batch_generator(X, y, batch_size=64,shuffle=False, random_seed=None):
@@ -116,9 +118,9 @@ def build_cnn():
     tf_x_img=tf.reshape(tf_x,shape=(-1,28,28,1),name='images')
     y_onehot=tf.one_hot(indices=tf_y,depth=10,dtype=tf.float32,name='tf_one_hot')
     h1=conv_layer(tf_x_img,n_outputs=32,kernel_size=(5,5),padding_mode='VALID',name='conv_1')
-    h1_pool=tf.nn.max_pool(h1,ksize=(1,2,2,1),strides=(1,2,2,1),padding='SAME')
+    h1_pool = tf.nn.max_pool(h1,ksize=[1, 2, 2, 1],strides=[1, 2, 2, 1],padding='SAME')   
     h2=conv_layer(h1_pool,kernel_size=(5,5),n_outputs=64,padding_mode='VALID',name='conv_2')
-    h2_pool=tf.nn.max_pool(h2,ksize=(1,2,2,1),strides=(1,2,2,1),padding='SAME')
+    h2_pool = tf.nn.max_pool(h2,ksize=[1, 2, 2, 1],strides=[1, 2, 2, 1],padding='SAME')
     h3=fc_layer(h2_pool,n_outputs=1024,activation_fn=tf.nn.relu,name='fc_1')
     keep_prob=tf1.placeholder(dtype=tf.float32,name='keep_prob')
     h3_drop=tf1.nn.dropout(h3,keep_prob=keep_prob,name='dropout_layer')
@@ -145,7 +147,7 @@ def train(sess,training_set,validation_set=None,initializer=True,epochs=20,shuff
         avg_loss=0.0
         for i, (batch_x,batch_y) in enumerate(batch_gen):
             feed = {'tf_x:0': batch_x,'tf_y:0': batch_y,'keep_prob:0': dropout}
-            loss, _ = sess.run(['loss_cross_entropy:0', 'train_op'],feed_dict=feed)
+            loss, _ = sess.run(['loss_cross_entropy:0', 'train_op'],feed_dict=feed);i
             avg_loss=avg_loss + loss
         training_loss.append(avg_loss)
         print('Epoch %02d Training Avg. Loss: %7.3f' % (epoch, avg_loss), end=' ')
@@ -183,9 +185,13 @@ with g.as_default():
     saver=tf1.train.Saver()
 
 with tf1.Session(graph=g) as sess:
-    train(sess,training_set=[X_train_centered,y_train],validation_set=[X_valid_centered,
-          y_valid],epochs=20,random_seed=random_seed,initializer=True,shuffle=True)
+    train(sess,training_set=[X_train_centered,y_train],validation_set=[X_valid_centered,y_valid]
+    ,epochs=20,random_seed=random_seed,initializer=True,shuffle=True)
     save(sess,saver,epoch=20)
+
+with tf1.Session(graph=g) as sess:
+    sess.run(tf1.global_variables_initializer())
+    file=tf1.summary.FileWriter(logdir='./logs/',graph=g)
 
 del g
     
