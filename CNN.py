@@ -158,7 +158,7 @@ def train(sess,training_set,validation_set=None,initializer=True,epochs=20,shuff
         print()
 
 def predict(sess,X_test,return_proba=False):
-    feed={'tf_x:0':X_test,'keep_proba:0':1}
+    feed={'tf_x:0':X_test,'keep_prob:0':1}
     if return_proba:
         return sess.run('probabilities:0',feed_dict=feed)
     else:
@@ -170,7 +170,7 @@ def save(sess,saver,epoch,path='./model/'):
     print('Saving Model.........')
     saver.save(sess,os.path.join(path,'cnn-model.ckpt'),global_step=epoch)
 
-def load(sess,epochs,saver,path):
+def load(sess,saver,path,epochs=20):
     print('Loading Model............')
     saver.restore(sess,os.path.join(path,'cnn-model.ckpt-%d'%epochs))
 
@@ -195,7 +195,7 @@ with tf1.Session(graph=g) as sess:
 
 del g
     
-config.gpu_options.allow_growth = True
+# config.gpu_options.allow_growth = True
 tf.test.is_built_with_cuda()
 tf.test.is_gpu_available(cuda_only=False, min_cuda_compute_capability=None)
 
@@ -204,16 +204,16 @@ with g2.as_default():
     tf1.set_random_seed(random_seed)
     ## build the graph
     build_cnn()
-    saver = tf.train.Saver()
+    saver = tf1.train.Saver()
 
 with tf1.Session(graph=g2) as sess:
-    load(saver, sess,epoch=20, path='./model/')
+    load(sess,saver,epochs=20, path='./model/')
     preds = predict(sess, X_test_centered,return_proba=False)
     print('Test Accuracy: %.3f%%' % (100*np.sum(preds == y_test)/len(y_test)))
 
 np.set_printoptions(precision=2, suppress=True)
 with tf1.Session(graph=g2) as sess:
-    load(saver, sess,epoch=20, path='./model/')
+    load(saver,sess,epoch=20, path='./model/')
     print(predict(sess, X_test_centered[:10],return_proba=False))
     print(predict(sess, X_test_centered[:10],return_proba=True))
 
@@ -231,6 +231,8 @@ with tf1.Session(graph=g2) as sess:
     preds = predict(sess, X_test_centered,return_proba=False)
     print('Test Accuracy: %.3f%%' % (100*np.sum(preds == y_test)/len(y_test)))
 
-
-
+axes,fig=plt.subplots(2,5,figsize=(5,20))
+for i in range(10):
+    plt.imshow(X_train_centered[i].reshape(28,28),'Greys')
+    plt.show()
 
