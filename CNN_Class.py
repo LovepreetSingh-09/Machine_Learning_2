@@ -99,7 +99,7 @@ class ConvNN(object):
         optimizer = tf1.train.AdamOptimizer(self.learning_rate)
         optimizer = optimizer.minimize(cross_entropy_loss,name='train_op')
         ## Finding accuracy
-        correct_predictions = tf.equal( predictions['labels'], tf_y, name='correct_preds')
+        correct_predictions = tf.equal(predictions['labels'], tf_y, name='correct_preds')
         accuracy = tf.reduce_mean(tf1.cast(correct_predictions, tf.float32), name='accuracy')
         print(accuracy)
         
@@ -126,12 +126,14 @@ class ConvNN(object):
             for i, (batch_x,batch_y) in enumerate(batch_gen):
                 feed = {'tf_x:0': batch_x,'tf_y:0': batch_y, 'is_train:0': True} ## for dropout
                 loss, _ = self.sess.run( ['cross_entropy_loss:0', 'train_op'],feed_dict=feed)
+                if int(i%(len(y_train)/6400))==0:
+                    print('#',end='')
                 avg_loss += loss
             print('Epoch %02d: Training Avg. Loss: ' '%7.3f' % (epoch, avg_loss), end=' ')
             if validation_set is not None:
-                feed = {'tf_x:0': batch_x,'tf_y:0': batch_y,'is_train:0' : False} ## for dropout
+                feed = {'tf_x:0': validation_set[0],'tf_y:0': validation_set[1],'is_train:0' : False} ## for dropout
                 valid_acc = self.sess.run('accuracy:0', feed_dict=feed)
-                print('Validation Acc: %7.3f' % valid_acc)
+                print('Validation Acc: %7.3f' %(valid_acc*100),'%')
             else:
                 print()
             
@@ -152,16 +154,13 @@ del cnn
 
 cnn2 = ConvNN(random_seed=123)
 cnn2.load(epoch=20, path='./tflayers-model/')
+print(y_test[:10])
 print(cnn2.predict(X_test_centered[:10, :]))
 preds = cnn2.predict(X_test_centered)
 print('Test Accuracy: %.2f%%' % (100* np.sum(y_test == preds)/len(y_test)))
 
-
-
-
-
-
-
-
+# Training 20 more iterations using initialize=False
+cnn2.train(training_set=(X_train_centered, y_train),
+          validation_set=(X_valid_centered, y_valid), initialize=False)
 
 
