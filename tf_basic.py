@@ -124,6 +124,8 @@ X_test_centered = (X_test - mean_vals)/std_val
 del X_train, X_test
 print(X_train_centered.shape, y_train.shape)
 print(X_test_centered.shape, y_test.shape)
+y_train_onehot = keras.utils.to_categorical(y_train)
+print(y_train_onehot.shape)
 
 n_features = X_train_centered.shape[1]
 n_classes = 10
@@ -176,6 +178,7 @@ y_pred = sess.run(predictions['classes'],feed_dict=feed)
 print('Test Accuracy: %.2f%%' % (100*np.sum(y_pred == y_test)/y_test.shape[0]))       
 
 y_train_onehot = keras.utils.to_categorical(y_train)
+print(y_train_onehot.shape)
 
 model = keras.models.Sequential()
 model.add(keras.layers.Dense(units=50,input_dim=X_train_centered.shape[1],kernel_initializer='glorot_uniform',
@@ -229,4 +232,3 @@ with g.as_default():
 with tf1.Session(graph=g) as sess:
     print('Ranks:',r1.eval(), r2.eval(), r3.eval())
     # 0 1 2
-
