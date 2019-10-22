@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import os
 import re
 import pickle
+import tensorflow
+import sklearn
 
 print(os.getcwd())
 basepath='aclImdb'
